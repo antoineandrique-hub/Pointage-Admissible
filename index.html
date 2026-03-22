@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pointage Présence</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 1.5rem 1rem; }
+  .app { background: #fff; border-radius: 16px; border: 1px solid #e0e0e0; width: 100%; max-width: 420px; padding: 1.5rem; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  h1 { font-size: 20px; font-weight: 600; color: #111; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 1.5rem; }
+  .btn { width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 10px; background: #fff; color: #111; font-size: 15px; cursor: pointer; transition: background .15s; }
+  .btn:hover { background: #f5f5f5; }
+  .btn.primary { background: #1F4E79; color: #fff; border-color: #1F4E79; }
+  .btn.primary:hover { background: #164069; }
+  .btn.danger { background: #A32D2D; color: #fff; border-color: #A32D2D; }
+  .btn-sm { width: auto; padding: 6px 14px; font-size: 13px; }
+  .btn-row { display: flex; gap: 10px; margin-bottom: 1rem; }
+  .btn-row .btn { flex: 1; }
+  select { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 10px; background: #fff; color: #111; font-size: 14px; margin-bottom: 1rem; appearance: none; }
+  .pin-display { display: flex; gap: 12px; justify-content: center; margin: 1.5rem 0; }
+  .pin-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #999; background: transparent; transition: background .1s, border-color .1s; }
+  .pin-dot.filled { background: #1F4E79; border-color: #1F4E79; }
+  .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 280px; margin: 0 auto; }
+  .num-btn { padding: 18px; border: 1px solid #e0e0e0; border-radius: 12px; background: #f9f9f9; color: #111; font-size: 22px; font-weight: 500; cursor: pointer; transition: background .1s; }
+  .num-btn:hover { background: #efefef; }
+  .num-btn:active { transform: scale(0.96); background: #e5e5e5; }
+  .error-msg { color: #c0392b; font-size: 13px; text-align: center; min-height: 20px; margin-top: 10px; }
+  .success-circle { width: 60px; height: 60px; border-radius: 50%; background: #EAF3DE; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; }
+  .badge-green { background: #EAF3DE; color: #27500A; }
+  .badge-red { background: #FCEBEB; color: #791F1F; }
+  .badge-gray { background: #f0f0f0; color: #555; }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1rem; }
+  .stat { background: #f5f5f5; border-radius: 10px; padding: 12px; text-align: center; }
+  .stat-num { font-size: 24px; font-weight: 600; color: #111; }
+  .stat-label { font-size: 11px; color: #666; margin-top: 2px; }
+  .tab-bar { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .tab { padding: 7px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; cursor: pointer; background: #fff; color: #666; }
+  .tab.active { background: #E6F1FB; color: #185FA5; border-color: #185FA5; }
+  .search-box { width: 100%; padding: 9px 12px; border: 1px solid #ccc; border-radius: 10px; background: #fff; color: #111; font-size: 13px; margin-bottom: 1rem; }
+  .table-wrap { border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; margin-bottom: 1rem; overflow-x: auto; }
+  table { width: 100%; font-size: 13px; border-collapse: collapse; min-width: 340px; }
+  th { text-align: left; color: #666; font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #e5e5e5; background: #fafafa; }
+  td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; color: #111; }
+  tr:last-child td { border-bottom: none; }
+  .divider { border: none; border-top: 1px solid #eee; margin: 1rem 0; }
+  .mono { font-family: monospace; font-size: 14px; letter-spacing: 2px; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .empty-msg { text-align: center; color: #999; padding: 1.5rem; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Accueil -->
+  <div id="screen-select" class="screen active">
+    <h1>Pointage présence</h1>
+    <p class="subtitle">Sélectionnez votre rôle</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn primary" onclick="showScreen('screen-salarie')">Je pointe ma présence</button>
+      <button class="btn" style="color:#666;font-size:13px;" onclick="showAdminLogin()">Accès administrateur</button>
+    </div>
+  </div>
+
+  <!-- Pointage salarié -->
+  <div id="screen-salarie" class="screen">
+    <h1>Pointage</h1>
+    <p class="subtitle">Choisissez votre nom, la demi-journée, puis votre code PIN</p>
+    <select id="nom-select" onchange="onNomChange()">
+      <option value="">-- Sélectionnez votre nom --</option>
+    </select>
+    <div id="demi-journee-select" style="display:none;">
+      <div class="btn-row">
+        <button id="btn-matin" class="btn" onclick="selectDemi('Matin')">Matin</button>
+        <button id="btn-am" class="btn" onclick="selectDemi('Après-midi')">Après-midi</button>
+      </div>
+    </div>
+    <div class="pin-display">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="numpad">
+      <button class="num-btn" onclick="addPin('1')">1</button>
+      <button class="num-btn" onclick="addPin('2')">2</button>
+      <button class="num-btn" onclick="addPin('3')">3</button>
+      <button class="num-btn" onclick="addPin('4')">4</button>
+      <button class="num-btn" onclick="addPin('5')">5</button>
+      <button class="num-btn" onclick="addPin('6')">6</button>
+      <button class="num-btn" onclick="addPin('7')">7</button>
+      <button class="num-btn" onclick="addPin('8')">8</button>
+      <button class="num-btn" onclick="addPin('9')">9</button>
+      <button class="num-btn" onclick="clearPin()" style="font-size:14px;">⌫</button>
+      <button class="num-btn" onclick="addPin('0')">0</button>
+      <button class="num-btn" onclick="submitPin()" style="font-size:13px;background:#1F4E79;color:#fff;border-color:#1F4E79;">OK</button>
+    </div>
+    <p class="error-msg" id="pin-error"></p>
+    <hr class="divider">
+    <button class="btn btn-sm" style="color:#666;" onclick="showScreen('screen-select')">Retour</button>
+  </div>
+
+  <!-- Succès -->
+  <div id="screen-success" class="screen">
+    <div style="text-align:center;padding:1.5rem 0;">
+      <div class="success-circle">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#27500A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h1 id="success-name" style="margin-bottom:6px;"></h1>
+      <p style="font-size:14px;color:#444;" id="success-detail"></p>
+      <p style="font-size:12px;color:#888;margin-top:8px;" id="success-time"></p>
+      <button class="btn primary" style="margin-top:1.5rem;" onclick="showScreen('screen-select')">Terminer</button>
+    </div>
+  </div>
+
+  <!-- Login admin -->
+  <div id="screen-admin-login" class="screen">
+    <h1>Accès administrateur</h1>
+    <p class="subtitle">Entrez le code admin</p>
+    <div class="pin-display">
+      <div class="pin-dot" id="ad0"></div>
+      <div class="pin-dot" id="ad1"></div>
+      <div class="pin-dot" id="ad2"></div>
+      <div class="pin-dot" id="ad3"></div>
+    </div>
+    <div class="numpad">
+      <button class="num-btn" onclick="addAdminPin('1')">1</button>
+      <button class="num-btn" onclick="addAdminPin('2')">2</button>
+      <button class="num-btn" onclick="addAdminPin('3')">3</button>
+      <button class="num-btn" onclick="addAdminPin('4')">4</button>
+      <button class="num-btn" onclick="addAdminPin('5')">5</button>
+      <button class="num-btn" onclick="addAdminPin('6')">6</button>
+      <button class="num-btn" onclick="addAdminPin('7')">7</button>
+      <button class="num-btn" onclick="addAdminPin('8')">8</button>
+      <button class="num-btn" onclick="addAdminPin('9')">9</button>
+      <button class="num-btn" onclick="clearAdminPin()" style="font-size:14px;">⌫</button>
+      <button class="num-btn" onclick="addAdminPin('0')">0</button>
+      <button class="num-btn" onclick="submitAdminPin()" style="font-size:13px;background:#1F4E79;color:#fff;border-color:#1F4E79;">OK</button>
+    </div>
+    <p class="error-msg" id="admin-pin-error"></p>
+    <hr class="divider">
+    <button class="btn btn-sm" style="color:#666;" onclick="showScreen('screen-select')">Retour</button>
+  </div>
+
+  <!-- Dashboard admin -->
+  <div id="screen-admin" class="screen">
+    <div class="top-bar">
+      <h1>Tableau de bord</h1>
+      <button class="btn btn-sm" style="color:#666;" onclick="showScreen('screen-select')">Quitter</button>
+    </div>
+    <div class="stat-grid" id="stats-grid"></div>
+    <div class="tab-bar">
+      <button class="tab active" id="tab-today" onclick="switchTab('today')">Aujourd'hui</button>
+      <button class="tab" id="tab-all" onclick="switchTab('all')">Tous</button>
+      <button class="tab" id="tab-salaries" onclick="switchTab('salaries')">Salariés</button>
+    </div>
+    <input class="search-box" type="text" placeholder="Rechercher..." id="search-input" oninput="renderTable()">
+    <div class="table-wrap">
+      <table id="admin-table">
+        <thead id="admin-thead"></thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
+    </div>
+    <button class="btn danger btn-sm" onclick="resetAll()">Réinitialiser tous les pointages</button>
+  </div>
+
+</div>
+
+<script>
+const salaries = [
+  "BIACABE Anaelle","FLORENT Anouk","LASSURE Apolline","LOHEAC Arthur",
+  "SCHMIDT Axel","GUICHARD Capucine","FRATELLINI Carla","VILLIERS Coline",
+  "TEIXEIRA Gabriel","JAILLON Garance","VINCENS Hippolyte","CARBONEL Hugo",
+  "RUBIO Josephine","LACHERIE Jules","BOBARD Justine","QUILLIOU Lalie",
+  "VIGGIANI Lana","ZABEE Leo","BOURGON Lily","GALLAUD Louis",
+  "GUILLAMONT Louise","TERZAGHI Lucie","GROTZINGER Manon","GOMEZ Mathilde",
+  "VINCENT Mathilde","JAMIN Paul","NGUYEN Phuc","ZERROUK Sacha",
+  "PRAZ Salome","EL ASAME Louna","DELOT Victor","AZZOUZ Leila",
+  "ASTIER Thomas","RIEGERT Joseph","ANDRIQUE Antoine","TOUSSAINT Eva",
+  "CAILLET Louise","CHAMBEFORT Iris","FARAUT Juliette","CAMUS Naomi",
+  "DAUPAGNE Louis","THERMOZ Raphael","GOUFFI Mel","FOURNAISE Charles",
+  "JONNART Eleonor"
+];
+
+const ADMIN_PIN = "1234";
+
+function genPin(nom) {
+  let h = 0;
+  for (const c of nom) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return String(1000 + (h % 9000)).padStart(4, '0');
+}
+
+const PINS = {};
+salaries.forEach(n => PINS[n] = genPin(n));
+
+let pointages = JSON.parse(localStorage.getItem('pointages') || '[]');
+let currentPin = '', adminPin = '', selectedDemi = '', currentTab = 'today';
+
+function savePointages() {
+  localStorage.setItem('pointages', JSON.stringify(pointages));
+}
+
+const sel = document.getElementById('nom-select');
+salaries.forEach(n => {
+  const o = document.createElement('option');
+  o.value = n; o.textContent = n;
+  sel.appendChild(o);
+});
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'screen-admin') { renderStats(); renderTable(); }
+}
+
+function showAdminLogin() {
+  adminPin = ''; updateAdminDots();
+  document.getElementById('admin-pin-error').textContent = '';
+  showScreen('screen-admin-login');
+}
+
+function onNomChange() {
+  const v = document.getElementById('nom-select').value;
+  document.getElementById('demi-journee-select').style.display = v ? 'block' : 'none';
+  selectedDemi = '';
+  document.getElementById('btn-matin').classList.remove('primary');
+  document.getElementById('btn-am').classList.remove('primary');
+  resetPin();
+}
+
+function selectDemi(d) {
+  selectedDemi = d;
+  document.getElementById('btn-matin').classList.toggle('primary', d === 'Matin');
+  document.getElementById('btn-am').classList.toggle('primary', d === 'Après-midi');
+}
+
+function addPin(d) {
+  if (currentPin.length < 4) { currentPin += d; updateDots(); }
+  if (currentPin.length === 4) submitPin();
+}
+function clearPin() { currentPin = currentPin.slice(0, -1); updateDots(); }
+function resetPin() { currentPin = ''; updateDots(); document.getElementById('pin-error').textContent = ''; }
+function updateDots() {
+  for (let i = 0; i < 4; i++) document.getElementById('d'+i).classList.toggle('filled', i < currentPin.length);
+}
+
+function submitPin() {
+  const nom = document.getElementById('nom-select').value;
+  const err = document.getElementById('pin-error');
+  if (!nom) { err.textContent = 'Sélectionnez votre nom.'; currentPin=''; updateDots(); return; }
+  if (!selectedDemi) { err.textContent = 'Choisissez Matin ou Après-midi.'; currentPin=''; updateDots(); return; }
+  if (currentPin !== PINS[nom]) { err.textContent = 'Code PIN incorrect.'; currentPin=''; updateDots(); return; }
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('fr-FR');
+  if (pointages.find(p => p.nom===nom && p.date===dateStr && p.demi===selectedDemi)) {
+    err.textContent = 'Vous avez déjà pointé pour cette demi-journée.'; currentPin=''; updateDots(); return;
+  }
+  const entry = { nom, demi: selectedDemi, date: dateStr, heure: now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) };
+  pointages.push(entry); savePointages();
+  document.getElementById('success-name').textContent = nom;
+  document.getElementById('success-detail').textContent = 'Pointage ' + selectedDemi + ' enregistré';
+  document.getElementById('success-time').textContent = dateStr + ' à ' + entry.heure;
+  document.getElementById('nom-select').value = '';
+  document.getElementById('demi-journee-select').style.display = 'none';
+  selectedDemi = ''; currentPin = ''; updateDots(); err.textContent = '';
+  showScreen('screen-success');
+}
+
+function addAdminPin(d) {
+  if (adminPin.length < 4) { adminPin += d; updateAdminDots(); }
+  if (adminPin.length === 4) submitAdminPin();
+}
+function clearAdminPin() { adminPin = adminPin.slice(0,-1); updateAdminDots(); }
+function updateAdminDots() {
+  for (let i=0;i<4;i++) document.getElementById('ad'+i).classList.toggle('filled', i < adminPin.length);
+}
+function submitAdminPin() {
+  if (adminPin === ADMIN_PIN) { showScreen('screen-admin'); }
+  else { document.getElementById('admin-pin-error').textContent = 'Code incorrect.'; adminPin=''; updateAdminDots(); }
+}
+
+function switchTab(t) {
+  currentTab = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  renderTable();
+}
+
+function renderStats() {
+  const today = new Date().toLocaleDateString('fr-FR');
+  const todayPts = pointages.filter(p => p.date===today);
+  const uniq = [...new Set(todayPts.map(p=>p.nom))].length;
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat"><div class="stat-num">${uniq}</div><div class="stat-label">Présents aujourd'hui</div></div>
+    <div class="stat"><div class="stat-num">${todayPts.length}</div><div class="stat-label">Pointages aujourd'hui</div></div>
+    <div class="stat"><div class="stat-num">${pointages.length}</div><div class="stat-label">Total pointages</div></div>`;
+}
+
+function renderTable() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const today = new Date().toLocaleDateString('fr-FR');
+  if (currentTab === 'salaries') {
+    const rows = salaries.filter(n=>n.toLowerCase().includes(q)).map(n => {
+      const todayPts = pointages.filter(p=>p.nom===n&&p.date===today);
+      const matin = todayPts.find(p=>p.demi==='Matin');
+      const am = todayPts.find(p=>p.demi==='Après-midi');
+      return { nom:n, pin:PINS[n], matin, am, total:pointages.filter(p=>p.nom===n).length };
+    });
+    document.getElementById('admin-thead').innerHTML = '<tr><th>Nom</th><th>PIN</th><th>Matin</th><th>Après-midi</th><th>Total</th></tr>';
+    document.getElementById('admin-tbody').innerHTML = rows.map(r=>`<tr>
+      <td>${r.nom}</td>
+      <td><span class="mono">${r.pin}</span></td>
+      <td>${r.matin?'<span class="badge badge-green">'+r.matin.heure+'</span>':'<span class="badge badge-gray">—</span>'}</td>
+      <td>${r.am?'<span class="badge badge-green">'+r.am.heure+'</span>':'<span class="badge badge-gray">—</span>'}</td>
+      <td>${r.total}</td></tr>`).join('');
+  } else {
+    let pts = (currentTab==='today' ? pointages.filter(p=>p.date===today) : [...pointages])
+      .filter(p=>p.nom.toLowerCase().includes(q)||p.date.includes(q))
+      .slice().reverse();
+    document.getElementById('admin-thead').innerHTML = '<tr><th>Nom</th><th>Date</th><th>Demi-journée</th><th>Heure</th></tr>';
+    document.getElementById('admin-tbody').innerHTML = pts.length
+      ? pts.map(p=>`<tr>
+          <td>${p.nom}</td><td>${p.date}</td>
+          <td><span class="badge ${p.demi==='Matin'?'badge-green':'badge-red'}">${p.demi}</span></td>
+          <td>${p.heure}</td></tr>`).join('')
+      : '<tr><td colspan="4" class="empty-msg">Aucun pointage</td></tr>';
+  }
+  renderStats();
+}
+
+function resetAll() {
+  if (confirm('Supprimer tous les pointages ?')) { pointages=[]; savePointages(); renderStats(); renderTable(); }
+}
+</script>
+</body>
+</html>
