@@ -269,7 +269,7 @@ salaries.forEach(n => PINS[n] = genPin(n));
  
 let pointages = JSON.parse(localStorage.getItem('pointages') || '[]');
 let currentPin='', adminPin='', selectedDemi='', currentTab='today', pendingEntry=null;
-let SCRIPT_URL = localStorage.getItem('script_url') || '';
+let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNH6YWEALVAlJooQFGZEVBTf5ewnnb-oAktpfLVsAG6l9O2QPd9LwBdauwYwmk1aU0nA/exec';
  
 function savePointages() { localStorage.setItem('pointages', JSON.stringify(pointages)); }
  
