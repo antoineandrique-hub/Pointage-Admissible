@@ -94,7 +94,7 @@
     </select>
     <div id="demi-journee-select" style="display:none;">
       <div style="text-align:center;margin-bottom:1rem;">
-        <button id="btn-matin" class="btn primary" onclick="selectDemi('Matin')" style="width:50%;margin:0 auto;">Matin</button>
+        <button id="btn-matin" class="btn primary" onclick="selectDemi('Journée')" style="width:50%;margin:0 auto;">Journée</button>
       </div>
     </div>
     <div class="pin-display">
@@ -296,7 +296,7 @@ function showAdminLogin() { adminPin=''; updateAdminDots(); document.getElementB
 function onNomChange() {
   const v = document.getElementById('nom-select').value;
   document.getElementById('demi-journee-select').style.display = v ? 'block' : 'none';
-  if (v) { selectedDemi='Matin'; } else { selectedDemi=''; }
+  if (v) { selectedDemi='Journée'; } else { selectedDemi=''; }
   resetPin();
 }
 function selectDemi(d) {
